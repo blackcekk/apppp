@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { LanguageProvider } from "@/providers/LanguageProvider";
 import { ThemeProvider } from "@/providers/ThemeProvider";
@@ -9,6 +9,7 @@ import { PortfolioProvider } from "@/providers/PortfolioProvider";
 import { AlertProvider } from "@/providers/AlertProvider";
 import { CurrencyProvider } from "@/providers/CurrencyProvider";
 import { SubscriptionProvider } from "@/providers/SubscriptionProvider";
+import { clearCorruptedData } from "@/utils/storage";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -32,9 +33,27 @@ function RootLayoutNav() {
 }
 
 export default function RootLayout() {
+  const [isReady, setIsReady] = useState(false);
+
   useEffect(() => {
-    SplashScreen.hideAsync();
+    const initializeApp = async () => {
+      try {
+        // Clear any corrupted data on startup
+        await clearCorruptedData();
+      } catch (error) {
+        console.error("Error initializing app:", error);
+      } finally {
+        setIsReady(true);
+        await SplashScreen.hideAsync();
+      }
+    };
+
+    initializeApp();
   }, []);
+
+  if (!isReady) {
+    return null;
+  }
 
   return (
     <QueryClientProvider client={queryClient}>

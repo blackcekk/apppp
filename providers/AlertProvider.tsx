@@ -1,7 +1,7 @@
 import createContextHook from "@nkzw/create-context-hook";
 import { useState, useEffect, useCallback, useMemo } from "react";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Alert } from "@/types/alert";
+import { safeAsyncStorageGet, safeAsyncStorageSet } from "@/utils/storage";
 
 export const [AlertProvider, useAlerts] = createContextHook(() => {
   const [alerts, setAlerts] = useState<Alert[]>([]);
@@ -12,17 +12,8 @@ export const [AlertProvider, useAlerts] = createContextHook(() => {
 
   const loadAlerts = async () => {
     try {
-      const saved = await AsyncStorage.getItem("alerts");
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved);
-          setAlerts(parsed);
-        } catch (parseError) {
-          console.error("Error parsing alerts data:", parseError);
-          await AsyncStorage.removeItem("alerts");
-          setAlerts([]);
-        }
-      }
+      const alerts = await safeAsyncStorageGet<Alert[]>("alerts", []);
+      setAlerts(alerts);
     } catch (error) {
       console.error("Error loading alerts:", error);
       setAlerts([]);
@@ -30,11 +21,9 @@ export const [AlertProvider, useAlerts] = createContextHook(() => {
   };
 
   const saveAlerts = async (newAlerts: Alert[]) => {
-    try {
-      await AsyncStorage.setItem("alerts", JSON.stringify(newAlerts));
+    const success = await safeAsyncStorageSet("alerts", newAlerts);
+    if (success) {
       setAlerts(newAlerts);
-    } catch (error) {
-      console.error("Error saving alerts:", error);
     }
   };
 

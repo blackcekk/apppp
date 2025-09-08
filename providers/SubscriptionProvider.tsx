@@ -2,6 +2,7 @@ import createContextHook from "@nkzw/create-context-hook";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Platform } from "react-native";
+import { safeAsyncStorageGet, safeAsyncStorageSet } from "@/utils/storage";
 
 export type SubscriptionTier = 'free' | 'basic' | 'premium';
 
@@ -65,29 +66,17 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
 
   const loadSubscription = async () => {
     try {
-      const saved = await AsyncStorage.getItem(SUBSCRIPTION_KEY);
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved);
-          // Check if subscription is expired
-          if (parsed.expiresAt && new Date(parsed.expiresAt) < new Date()) {
-            // Subscription expired, revert to free
-            await setTier('free');
-          } else {
-            setSubscription({
-              ...parsed,
-              features: tierFeatures[parsed.tier as SubscriptionTier],
-            });
-          }
-        } catch (parseError) {
-          console.error("Error parsing subscription data:", parseError);
-          await AsyncStorage.removeItem(SUBSCRIPTION_KEY);
-          setSubscription({
-            tier: 'free',
-            expiresAt: null,
-            features: tierFeatures.free,
-          });
-        }
+      const saved = await safeAsyncStorageGet<{ tier: SubscriptionTier; expiresAt: string | null }>(SUBSCRIPTION_KEY, { tier: 'free', expiresAt: null });
+      
+      // Check if subscription is expired
+      if (saved.expiresAt && new Date(saved.expiresAt) < new Date()) {
+        // Subscription expired, revert to free
+        await setTier('free');
+      } else {
+        setSubscription({
+          ...saved,
+          features: tierFeatures[saved.tier],
+        });
       }
     } catch (error) {
       console.error("Error loading subscription:", error);
@@ -109,10 +98,10 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
         features: tierFeatures[tier],
       };
       
-      await AsyncStorage.setItem(SUBSCRIPTION_KEY, JSON.stringify({
+      await safeAsyncStorageSet(SUBSCRIPTION_KEY, {
         tier,
         expiresAt: expiresAt || null,
-      }));
+      });
       
       setSubscription(newSubscription);
     } catch (error) {

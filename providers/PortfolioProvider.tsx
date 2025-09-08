@@ -3,6 +3,7 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Asset, Transaction } from "@/types/portfolio";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { safeAsyncStorageGet, safeAsyncStorageSet } from "@/utils/storage";
 
 export const [PortfolioProvider, usePortfolio] = createContextHook(() => {
   const [portfolio, setPortfolio] = useState<Asset[]>([]);
@@ -13,32 +14,11 @@ export const [PortfolioProvider, usePortfolio] = createContextHook(() => {
     queryKey: ["portfolio"],
     queryFn: async () => {
       try {
-        const [portfolioData, transactionsData, hideBalancesData] = await Promise.all([
-          AsyncStorage.getItem("portfolio"),
-          AsyncStorage.getItem("transactions"),
+        const [portfolio, transactions, hideBalancesData] = await Promise.all([
+          safeAsyncStorageGet<Asset[]>("portfolio", []),
+          safeAsyncStorageGet<Transaction[]>("transactions", []),
           AsyncStorage.getItem("hideBalances"),
         ]);
-        
-        let portfolio: Asset[] = [];
-        let transactions: Transaction[] = [];
-        
-        if (portfolioData) {
-          try {
-            portfolio = JSON.parse(portfolioData);
-          } catch (e) {
-            console.error("Error parsing portfolio data:", e);
-            await AsyncStorage.removeItem("portfolio");
-          }
-        }
-        
-        if (transactionsData) {
-          try {
-            transactions = JSON.parse(transactionsData);
-          } catch (e) {
-            console.error("Error parsing transactions data:", e);
-            await AsyncStorage.removeItem("transactions");
-          }
-        }
         
         return {
           portfolio,
@@ -67,10 +47,10 @@ export const [PortfolioProvider, usePortfolio] = createContextHook(() => {
   const saveMutation = useMutation({
     mutationFn: async (data: { portfolio?: Asset[]; transactions?: Transaction[] }) => {
       if (data.portfolio) {
-        await AsyncStorage.setItem("portfolio", JSON.stringify(data.portfolio));
+        await safeAsyncStorageSet("portfolio", data.portfolio);
       }
       if (data.transactions) {
-        await AsyncStorage.setItem("transactions", JSON.stringify(data.transactions));
+        await safeAsyncStorageSet("transactions", data.transactions);
       }
     },
   });

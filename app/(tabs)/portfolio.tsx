@@ -32,9 +32,12 @@ export default function PortfolioScreen() {
   const [refreshing, setRefreshing] = React.useState(false);
 
   const chartData = useMemo(() => {
+    // Mock data for chart - in production, this would come from historical data
+    const mockData = [0, 20, 45, 28, 80, 99];
+    const mockLabels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun"];
     return {
-      labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"],
-      data: [0, 20, 45, 28, 80, 99],
+      labels: mockLabels,
+      data: mockData,
     };
   }, []);
 
