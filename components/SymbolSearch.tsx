@@ -77,15 +77,23 @@ export default function SymbolSearch({
   }, [value]);
 
   const handleSelectSymbol = async (asset: Asset) => {
+    console.log('SymbolSearch: Selecting symbol', asset);
+    
+    // Update the input field first
     onChangeText(asset.symbol);
+    
+    // Hide suggestions immediately
     setShowSuggestions(false);
     setSuggestions([]);
     
     try {
+      console.log('SymbolSearch: Fetching current price for', asset.symbol);
       const currentPrice = await getSymbolPrice(asset.symbol);
+      console.log('SymbolSearch: Got current price', currentPrice);
       onSelectSymbol(asset.symbol, currentPrice || asset.price, asset.name);
     } catch (error) {
-      console.error("Price fetch error:", error);
+      console.error("SymbolSearch: Price fetch error:", error);
+      console.log('SymbolSearch: Using fallback price', asset.price);
       onSelectSymbol(asset.symbol, asset.price, asset.name);
     }
   };

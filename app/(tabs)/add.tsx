@@ -33,11 +33,13 @@ export default function AddTransactionScreen() {
   const [notes, setNotes] = useState("");
 
   const handleSymbolSelect = (selectedSymbol: string, currentPrice: number, name?: string) => {
+    console.log('AddTransaction: Symbol selected', { selectedSymbol, currentPrice, name });
     setSymbol(selectedSymbol);
     setPrice(currentPrice.toString());
     if (name) {
       setAssetName(name);
     }
+    console.log('AddTransaction: State updated', { symbol: selectedSymbol, price: currentPrice.toString(), assetName: name });
   };
 
   const handleSubmit = () => {
@@ -45,6 +47,7 @@ export default function AddTransactionScreen() {
     
     if (!symbol || !quantity || !price) {
       console.log('Validation failed:', { symbol: !!symbol, quantity: !!quantity, price: !!price });
+      alert(`Lütfen tüm alanları doldurun:\nSembol: ${symbol || 'Boş'}\nMiktar: ${quantity || 'Boş'}\nFiyat: ${price || 'Boş'}`);
       return;
     }
 
@@ -53,6 +56,7 @@ export default function AddTransactionScreen() {
     
     if (isNaN(quantityNum) || isNaN(priceNum) || quantityNum <= 0 || priceNum <= 0) {
       console.log('Invalid numbers:', { quantityNum, priceNum });
+      alert(`Geçersiz sayılar:\nMiktar: ${quantityNum}\nFiyat: ${priceNum}`);
       return;
     }
 
@@ -82,6 +86,7 @@ export default function AddTransactionScreen() {
     setNotes('');
     
     console.log('Transaction added, navigating back');
+    alert('İşlem başarıyla eklendi!');
     router.back();
   };
 
