@@ -10,7 +10,7 @@ import {
   RefreshControl,
 } from "react-native";
 
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+
 import { useTheme } from "@/providers/ThemeProvider";
 import { useLanguage } from "@/providers/LanguageProvider";
 import { Search } from "lucide-react-native";
@@ -21,7 +21,7 @@ import MarketItem from "@/components/MarketItem";
 export default function MarketsScreen() {
   const { colors } = useTheme();
   const { t } = useLanguage();
-  const insets = useSafeAreaInsets();
+
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
 
@@ -44,7 +44,7 @@ export default function MarketsScreen() {
   );
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top }]}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={[styles.searchContainer, { backgroundColor: colors.card }]}>
         <Search color={colors.textSecondary} size={20} />
         <TextInput
@@ -104,7 +104,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     margin: 16,
-    marginTop: 16,
     padding: 12,
     borderRadius: 12,
     gap: 8,
@@ -115,6 +114,7 @@ const styles = StyleSheet.create({
   },
   categoriesContainer: {
     maxHeight: 50,
+    marginBottom: 8,
   },
   categoriesContent: {
     paddingHorizontal: 16,
