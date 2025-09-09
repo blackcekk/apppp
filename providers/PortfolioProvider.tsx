@@ -150,6 +150,15 @@ export const [PortfolioProvider, usePortfolio] = createContextHook(() => {
     await AsyncStorage.setItem("hideBalances", newValue.toString());
   }, [hideBalances]);
 
+  const updateAssetTargetWeight = useCallback((assetId: string, targetWeight: number) => {
+    console.log('PortfolioProvider: Updating asset target weight', assetId, targetWeight);
+    const updatedPortfolio = portfolio.map(asset => 
+      asset.id === assetId ? { ...asset, targetWeight } : asset
+    );
+    setPortfolio(updatedPortfolio);
+    saveMutate({ portfolio: updatedPortfolio });
+  }, [portfolio, saveMutate]);
+
   const totalValue = useMemo(() => {
     return portfolio.reduce((sum, asset) => sum + (asset.quantity * asset.currentPrice), 0);
   }, [portfolio]);
@@ -166,6 +175,7 @@ export const [PortfolioProvider, usePortfolio] = createContextHook(() => {
     transactions,
     addTransaction,
     removeAsset,
+    updateAssetTargetWeight,
     totalValue,
     totalProfit,
     profitPercentage,
@@ -173,5 +183,5 @@ export const [PortfolioProvider, usePortfolio] = createContextHook(() => {
     isLoading,
     hideBalances,
     toggleHideBalances,
-  }), [portfolio, transactions, addTransaction, removeAsset, totalValue, totalProfit, profitPercentage, refreshPortfolio, isLoading, hideBalances, toggleHideBalances]);
+  }), [portfolio, transactions, addTransaction, removeAsset, updateAssetTargetWeight, totalValue, totalProfit, profitPercentage, refreshPortfolio, isLoading, hideBalances, toggleHideBalances]);
 });
