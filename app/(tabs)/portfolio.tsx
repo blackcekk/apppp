@@ -30,7 +30,7 @@ export default function PortfolioScreen() {
   const { currentCurrency } = useCurrency();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
-  const [refreshing, setRefreshing] = React.useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [selectedPeriod, setSelectedPeriod] = useState<ChartPeriod>('daily');
 
   const generatePortfolioHistoricalData = useCallback((period: ChartPeriod, currentValue: number) => {
