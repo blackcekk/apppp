@@ -2,18 +2,30 @@ import createContextHook from "@nkzw/create-context-hook";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { Alert } from "@/types/alert";
 import { safeAsyncStorageGet, safeAsyncStorageSet } from "@/utils/storage";
+import { notificationService } from "@/services/notificationService";
 
 export const [AlertProvider, useAlerts] = createContextHook(() => {
   const [alerts, setAlerts] = useState<Alert[]>([]);
 
   useEffect(() => {
     loadAlerts();
+    notificationService.initialize();
   }, []);
 
   const loadAlerts = async () => {
     try {
       const alerts = await safeAsyncStorageGet<Alert[]>("alerts", []);
-      setAlerts(alerts);
+      // Migrate old alerts to include notificationType
+      const migratedAlerts = alerts.map(alert => ({
+        ...alert,
+        notificationType: alert.notificationType || 'app' as const
+      }));
+      setAlerts(migratedAlerts);
+      
+      // Save migrated alerts if any were updated
+      if (migratedAlerts.some((alert, index) => !alerts[index]?.notificationType)) {
+        await safeAsyncStorageSet("alerts", migratedAlerts);
+      }
     } catch (error) {
       console.error("Error loading alerts:", error);
       setAlerts([]);
@@ -35,6 +47,8 @@ export const [AlertProvider, useAlerts] = createContextHook(() => {
     saveAlerts([...alerts, newAlert]);
   }, [alerts]);
 
+
+
   const removeAlert = useCallback((id: string) => {
     saveAlerts(alerts.filter(a => a.id !== id));
   }, [alerts]);
@@ -51,5 +65,6 @@ export const [AlertProvider, useAlerts] = createContextHook(() => {
     addAlert,
     removeAlert,
     toggleAlert,
+    notificationService,
   }), [alerts, addAlert, removeAlert, toggleAlert]);
 });

@@ -1,3 +1,5 @@
+export type NotificationType = "app" | "alarm" | "both";
+
 export interface Alert {
   id: string;
   symbol: string;
@@ -5,4 +7,5 @@ export interface Alert {
   type: "above" | "below";
   enabled: boolean;
   note?: string;
+  notificationType: NotificationType;
 }

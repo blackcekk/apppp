@@ -8,11 +8,14 @@ import {
   TextInput,
   KeyboardAvoidingView,
   Platform,
+  ScrollView,
+
 } from "react-native";
 import { useTheme } from "@/providers/ThemeProvider";
 import { useLanguage } from "@/providers/LanguageProvider";
 import { useAlerts } from "@/providers/AlertProvider";
-import { X } from "lucide-react-native";
+import { NotificationType } from "@/types/alert";
+import { X, Bell, AlarmClock, Smartphone } from "lucide-react-native";
 
 interface CreateAlertModalProps {
   visible: boolean;
@@ -22,15 +25,36 @@ interface CreateAlertModalProps {
 export default function CreateAlertModal({ visible, onClose }: CreateAlertModalProps) {
   const { colors } = useTheme();
   const { t } = useLanguage();
-  const { addAlert } = useAlerts();
+  const { addAlert, notificationService } = useAlerts();
 
   const [symbol, setSymbol] = useState("");
   const [targetPrice, setTargetPrice] = useState("");
   const [type, setType] = useState<"above" | "below">("above");
   const [note, setNote] = useState("");
+  const [notificationType, setNotificationType] = useState<NotificationType>("app");
 
-  const handleCreate = () => {
+  const handleCreate = async () => {
     if (!symbol || !targetPrice) return;
+
+    // Check permissions based on notification type
+    const permissionStatus = notificationService.getPermissionStatus(notificationType);
+    
+    if (!permissionStatus.hasPermission && permissionStatus.canRequest) {
+      let permissionGranted = false;
+      
+      if (notificationType === 'app' || notificationType === 'both') {
+        permissionGranted = await notificationService.requestNotificationPermission();
+      }
+      
+      if (notificationType === 'alarm' || notificationType === 'both') {
+        permissionGranted = await notificationService.requestAlarmPermission();
+      }
+      
+      if (!permissionGranted) {
+        console.log('Permission denied for notification type:', notificationType);
+        return;
+      }
+    }
 
     addAlert({
       symbol: symbol.toUpperCase(),
@@ -38,12 +62,40 @@ export default function CreateAlertModal({ visible, onClose }: CreateAlertModalP
       type,
       note,
       enabled: true,
+      notificationType,
     });
 
     setSymbol("");
     setTargetPrice("");
     setNote("");
+    setNotificationType("app");
     onClose();
+  };
+
+  const getNotificationIcon = (type: NotificationType) => {
+    switch (type) {
+      case 'app':
+        return <Bell size={20} color={colors.text} />;
+      case 'alarm':
+        return <AlarmClock size={20} color={colors.text} />;
+      case 'both':
+        return <Smartphone size={20} color={colors.text} />;
+      default:
+        return <Bell size={20} color={colors.text} />;
+    }
+  };
+
+  const getNotificationLabel = (type: NotificationType) => {
+    switch (type) {
+      case 'app':
+        return t("alerts.appNotification");
+      case 'alarm':
+        return t("alerts.phoneAlarm");
+      case 'both':
+        return t("alerts.bothNotifications");
+      default:
+        return t("alerts.appNotification");
+    }
   };
 
   return (
@@ -60,67 +112,116 @@ export default function CreateAlertModal({ visible, onClose }: CreateAlertModalP
             </TouchableOpacity>
           </View>
 
-          <TextInput
-            style={[styles.input, { backgroundColor: colors.card, color: colors.text }]}
-            placeholder={t("alerts.symbol")}
-            placeholderTextColor={colors.textSecondary}
-            value={symbol}
-            onChangeText={setSymbol}
-            autoCapitalize="characters"
-          />
+          <ScrollView showsVerticalScrollIndicator={false}>
+            <TextInput
+              style={[styles.input, { backgroundColor: colors.card, color: colors.text }]}
+              placeholder={t("alerts.symbol")}
+              placeholderTextColor={colors.textSecondary}
+              value={symbol}
+              onChangeText={setSymbol}
+              autoCapitalize="characters"
+            />
 
-          <View style={styles.typeSelector}>
-            <TouchableOpacity
-              style={[
-                styles.typeButton,
-                { backgroundColor: type === "above" ? colors.primary : colors.card },
-              ]}
-              onPress={() => setType("above")}
-            >
-              <Text
+            <View style={styles.typeSelector}>
+              <TouchableOpacity
                 style={[
-                  styles.typeButtonText,
-                  { color: type === "above" ? "#FFFFFF" : colors.text },
+                  styles.typeButton,
+                  { backgroundColor: type === "above" ? colors.primary : colors.card },
                 ]}
+                onPress={() => setType("above")}
               >
-                {t("alerts.priceAbove")}
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[
-                styles.typeButton,
-                { backgroundColor: type === "below" ? colors.primary : colors.card },
-              ]}
-              onPress={() => setType("below")}
-            >
-              <Text
+                <Text
+                  style={[
+                    styles.typeButtonText,
+                    { color: type === "above" ? "#FFFFFF" : colors.text },
+                  ]}
+                >
+                  {t("alerts.priceAbove")}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
                 style={[
-                  styles.typeButtonText,
-                  { color: type === "below" ? "#FFFFFF" : colors.text },
+                  styles.typeButton,
+                  { backgroundColor: type === "below" ? colors.primary : colors.card },
                 ]}
+                onPress={() => setType("below")}
               >
-                {t("alerts.priceBelow")}
-              </Text>
-            </TouchableOpacity>
-          </View>
+                <Text
+                  style={[
+                    styles.typeButtonText,
+                    { color: type === "below" ? "#FFFFFF" : colors.text },
+                  ]}
+                >
+                  {t("alerts.priceBelow")}
+                </Text>
+              </TouchableOpacity>
+            </View>
 
-          <TextInput
-            style={[styles.input, { backgroundColor: colors.card, color: colors.text }]}
-            placeholder={t("alerts.targetPrice")}
-            placeholderTextColor={colors.textSecondary}
-            value={targetPrice}
-            onChangeText={setTargetPrice}
-            keyboardType="decimal-pad"
-          />
+            <TextInput
+              style={[styles.input, { backgroundColor: colors.card, color: colors.text }]}
+              placeholder={t("alerts.targetPrice")}
+              placeholderTextColor={colors.textSecondary}
+              value={targetPrice}
+              onChangeText={setTargetPrice}
+              keyboardType="decimal-pad"
+            />
 
-          <TextInput
-            style={[styles.input, { backgroundColor: colors.card, color: colors.text }]}
-            placeholder={t("alerts.note")}
-            placeholderTextColor={colors.textSecondary}
-            value={note}
-            onChangeText={setNote}
-            multiline
-          />
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>
+              {t("alerts.notificationType")}
+            </Text>
+            
+            <View style={styles.notificationTypeSelector}>
+              {(['app', 'alarm', 'both'] as NotificationType[]).map((type) => {
+                const isSelected = notificationType === type;
+                const permissionStatus = notificationService.getPermissionStatus(type);
+                
+                return (
+                  <TouchableOpacity
+                    key={type}
+                    style={[
+                      styles.notificationTypeButton,
+                      {
+                        backgroundColor: isSelected ? colors.primary : colors.card,
+                        borderColor: isSelected ? colors.primary : colors.border,
+                      },
+                    ]}
+                    onPress={() => setNotificationType(type)}
+                  >
+                    <View style={styles.notificationTypeContent}>
+                      {getNotificationIcon(type)}
+                      <Text
+                        style={[
+                          styles.notificationTypeText,
+                          { color: isSelected ? "#FFFFFF" : colors.text },
+                        ]}
+                      >
+                        {getNotificationLabel(type)}
+                      </Text>
+                      {!permissionStatus.hasPermission && permissionStatus.canRequest && (
+                        <Text
+                          style={[
+                            styles.permissionText,
+                            { color: isSelected ? "#FFFFFF" : colors.textSecondary },
+                          ]}
+                        >
+                          {t("alerts.permissionRequired")}
+                        </Text>
+                      )}
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+
+            <TextInput
+              style={[styles.input, { backgroundColor: colors.card, color: colors.text }]}
+              placeholder={t("alerts.note")}
+              placeholderTextColor={colors.textSecondary}
+              value={note}
+              onChangeText={setNote}
+              multiline
+            />
+          </ScrollView>
 
           <TouchableOpacity
             style={[styles.createButton, { backgroundColor: colors.primary }]}
@@ -143,6 +244,7 @@ const styles = StyleSheet.create({
     padding: 24,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
+    maxHeight: '90%',
   },
   header: {
     flexDirection: "row",
@@ -174,6 +276,35 @@ const styles = StyleSheet.create({
   typeButtonText: {
     fontSize: 14,
     fontWeight: "600",
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    marginBottom: 12,
+    marginTop: 8,
+  },
+  notificationTypeSelector: {
+    gap: 12,
+    marginBottom: 16,
+  },
+  notificationTypeButton: {
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  notificationTypeContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  notificationTypeText: {
+    fontSize: 16,
+    fontWeight: "500",
+    flex: 1,
+  },
+  permissionText: {
+    fontSize: 12,
+    fontStyle: "italic",
   },
   createButton: {
     paddingVertical: 16,

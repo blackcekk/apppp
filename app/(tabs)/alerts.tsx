@@ -11,28 +11,42 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "@/providers/ThemeProvider";
 import { useLanguage } from "@/providers/LanguageProvider";
 import { useAlerts } from "@/providers/AlertProvider";
-import { Bell, Plus } from "lucide-react-native";
+import { Bell, Plus, TestTube } from "lucide-react-native";
 import AlertItem from "@/components/AlertItem";
 import CreateAlertModal from "@/components/CreateAlertModal";
 
 export default function AlertsScreen() {
   const { colors } = useTheme();
   const { t } = useLanguage();
-  const { alerts, removeAlert, toggleAlert } = useAlerts();
+  const { alerts, removeAlert, toggleAlert, notificationService } = useAlerts();
   const insets = useSafeAreaInsets();
   const [showCreateModal, setShowCreateModal] = useState(false);
+
+  const testNotification = async () => {
+    await notificationService.triggerPriceAlert('AAPL', 150.25, 150.00, 'above', 'app');
+  };
+
+
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top }]}>
       <View style={styles.header}>
         <Text style={[styles.title, { color: colors.text }]}>{t("alerts.title")}</Text>
-        <TouchableOpacity
-          style={[styles.addButton, { backgroundColor: colors.primary }]}
-          onPress={() => setShowCreateModal(true)}
-        >
-          <Plus color="#FFFFFF" size={20} />
-          <Text style={styles.addButtonText}>{t("alerts.create")}</Text>
-        </TouchableOpacity>
+        <View style={styles.headerButtons}>
+          <TouchableOpacity
+            style={[styles.testButton, { backgroundColor: colors.card }]}
+            onPress={testNotification}
+          >
+            <TestTube color={colors.primary} size={16} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.addButton, { backgroundColor: colors.primary }]}
+            onPress={() => setShowCreateModal(true)}
+          >
+            <Plus color="#FFFFFF" size={20} />
+            <Text style={styles.addButtonText}>{t("alerts.create")}</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {alerts.length === 0 ? (
@@ -80,6 +94,17 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: "bold",
+  },
+  headerButtons: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  testButton: {
+    padding: 8,
+    borderRadius: 16,
+    justifyContent: "center",
+    alignItems: "center",
   },
   addButton: {
     flexDirection: "row",

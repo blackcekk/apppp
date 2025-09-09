@@ -2,7 +2,7 @@ import React from "react";
 import { StyleSheet, Text, View, TouchableOpacity, Switch } from "react-native";
 import { useTheme } from "@/providers/ThemeProvider";
 import { useCurrency } from "@/providers/CurrencyProvider";
-import { Trash2, TrendingUp, TrendingDown } from "lucide-react-native";
+import { Trash2, TrendingUp, TrendingDown, Bell, AlarmClock, Smartphone } from "lucide-react-native";
 import { Alert } from "@/types/alert";
 import { formatCurrency } from "@/utils/formatters";
 
@@ -27,8 +27,15 @@ export default function AlertItem({ alert, onToggle, onDelete }: AlertItemProps)
               <TrendingDown color={colors.primary} size={20} />
             )}
           </View>
-          <View>
-            <Text style={[styles.symbol, { color: colors.text }]}>{alert.symbol}</Text>
+          <View style={styles.info}>
+            <View style={styles.symbolRow}>
+              <Text style={[styles.symbol, { color: colors.text }]}>{alert.symbol}</Text>
+              <View style={styles.notificationIcon}>
+                {alert.notificationType === 'app' && <Bell color={colors.textSecondary} size={14} />}
+                {alert.notificationType === 'alarm' && <AlarmClock color={colors.textSecondary} size={14} />}
+                {alert.notificationType === 'both' && <Smartphone color={colors.textSecondary} size={14} />}
+              </View>
+            </View>
             <Text style={[styles.condition, { color: colors.textSecondary }]}>
               {alert.type === "above" ? "Above" : "Below"} {formatCurrency(alert.targetPrice, currentCurrency)}
             </Text>
@@ -78,9 +85,20 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
+  info: {
+    flex: 1,
+  },
+  symbolRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
   symbol: {
     fontSize: 16,
     fontWeight: "600",
+  },
+  notificationIcon: {
+    opacity: 0.7,
   },
   condition: {
     fontSize: 12,
