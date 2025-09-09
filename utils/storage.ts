@@ -2,9 +2,13 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export const safeJsonParse = <T>(data: string, fallback: T): T => {
   try {
-    return JSON.parse(data);
+    if (!data || data.trim() === '') {
+      return fallback;
+    }
+    const parsed = JSON.parse(data);
+    return parsed;
   } catch (error) {
-    console.error("JSON parse error:", error);
+    console.error("JSON parse error for data:", data?.substring(0, 100), error);
     return fallback;
   }
 };
@@ -47,6 +51,8 @@ export const clearCorruptedData = async (): Promise<void> => {
     "theme",
     "hideBalances",
     "@portfolio/subscription",
+    "@portfolio/assets",
+    "@portfolio/transactions",
   ];
 
   for (const key of keys) {
@@ -57,9 +63,21 @@ export const clearCorruptedData = async (): Promise<void> => {
         try {
           if (key === "hideBalances" || key === "theme" || key === "currency" || key === "language") {
             // These are simple string values, not JSON
+            // But still validate they are proper strings
+            if (typeof data !== 'string' || data.includes('object') || data.includes('{')) {
+              console.log(`Removing corrupted string data for key: ${key}`);
+              await AsyncStorage.removeItem(key);
+            }
             continue;
           }
-          JSON.parse(data);
+          const parsed = JSON.parse(data);
+          // Additional validation for arrays
+          if (key === "portfolio" || key === "transactions" || key === "alerts") {
+            if (!Array.isArray(parsed)) {
+              console.log(`Removing non-array data for key: ${key}`);
+              await AsyncStorage.removeItem(key);
+            }
+          }
         } catch {
           console.log(`Removing corrupted data for key: ${key}`);
           await AsyncStorage.removeItem(key);
@@ -67,6 +85,21 @@ export const clearCorruptedData = async (): Promise<void> => {
       }
     } catch (error) {
       console.error(`Error checking ${key}:`, error);
+      // If there's an error accessing the key, try to remove it
+      try {
+        await AsyncStorage.removeItem(key);
+      } catch (removeError) {
+        console.error(`Error removing corrupted key ${key}:`, removeError);
+      }
     }
+  }
+};
+
+export const clearAllData = async (): Promise<void> => {
+  try {
+    await AsyncStorage.clear();
+    console.log('All AsyncStorage data cleared');
+  } catch (error) {
+    console.error('Error clearing AsyncStorage:', error);
   }
 };
