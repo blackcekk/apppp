@@ -7,14 +7,15 @@ import {
   TouchableOpacity,
   RefreshControl,
   useWindowDimensions,
-
+  Animated,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Swipeable } from "react-native-gesture-handler";
 import { useTheme } from "@/providers/ThemeProvider";
 import { useLanguage } from "@/providers/LanguageProvider";
 import { usePortfolio } from "@/providers/PortfolioProvider";
 import { useCurrency } from "@/providers/CurrencyProvider";
-import { TrendingUp, TrendingDown, Eye, EyeOff } from "lucide-react-native";
+import { TrendingUp, TrendingDown, Eye, EyeOff, Trash2 } from "lucide-react-native";
 import { router } from "expo-router";
 import LineChart from "@/components/LineChart";
 import { formatCurrency, formatPercentage } from "@/utils/formatters";
@@ -26,7 +27,7 @@ type ChartPeriod = 'daily' | 'weekly' | 'monthly';
 export default function PortfolioScreen() {
   const { colors } = useTheme();
   const { t } = useLanguage();
-  const { portfolio, totalValue, totalProfit, profitPercentage, refreshPortfolio, hideBalances, toggleHideBalances } = usePortfolio();
+  const { portfolio, totalValue, totalProfit, profitPercentage, refreshPortfolio, hideBalances, toggleHideBalances, removeAsset } = usePortfolio();
   const { currentCurrency } = useCurrency();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
@@ -114,6 +115,23 @@ export default function PortfolioScreen() {
     setRefreshing(true);
     await refreshPortfolio();
     setRefreshing(false);
+  };
+
+  const renderRightAction = (assetId: string, assetSymbol: string) => {
+    return (
+      <Animated.View style={[styles.deleteAction, { backgroundColor: colors.error }]}>
+        <TouchableOpacity
+          style={styles.deleteButton}
+          onPress={() => {
+            console.log('Deleting asset:', assetId);
+            removeAsset(assetId);
+          }}
+        >
+          <Trash2 color="#FFFFFF" size={20} />
+          <Text style={styles.deleteText}>Sil</Text>
+        </TouchableOpacity>
+      </Animated.View>
+    );
   };
 
   return (
@@ -208,7 +226,12 @@ export default function PortfolioScreen() {
           </View>
 
           {portfolio.map((asset) => (
-            <AssetCard key={asset.id} asset={asset} onPress={() => console.log('Asset details:', asset.symbol)} />
+            <Swipeable
+              key={asset.id}
+              renderRightActions={() => renderRightAction(asset.id, asset.symbol)}
+            >
+              <AssetCard asset={asset} onPress={() => console.log('Asset details:', asset.symbol)} />
+            </Swipeable>
           ))}
         </View>
       </ScrollView>
@@ -299,5 +322,25 @@ const styles = StyleSheet.create({
   seeAll: {
     fontSize: 14,
     fontWeight: "500",
+  },
+  deleteAction: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    width: 80,
+    marginBottom: 12,
+    borderRadius: 12,
+  },
+  deleteButton: {
+    justifyContent: "center",
+    alignItems: "center",
+    width: "100%",
+    height: "100%",
+    gap: 4,
+  },
+  deleteText: {
+    color: "#FFFFFF",
+    fontSize: 12,
+    fontWeight: "600",
   },
 });

@@ -8,7 +8,7 @@ import {
   FlatList,
   ActivityIndicator,
 } from "react-native";
-import { TrendingUp, Search } from "lucide-react-native";
+import { TrendingUp, Search, Bitcoin, DollarSign, Building2 } from "lucide-react-native";
 import { useTheme } from "@/providers/ThemeProvider";
 import { useLanguage } from "@/providers/LanguageProvider";
 import { searchSymbols, getSymbolPrice } from "@/services/marketService";
@@ -98,6 +98,18 @@ export default function SymbolSearch({
     }
   };
 
+  const getAssetTypeIcon = (category: string) => {
+    switch (category) {
+      case 'crypto':
+        return <Bitcoin color={colors.primary} size={16} />;
+      case 'forex':
+        return <DollarSign color={colors.primary} size={16} />;
+      case 'stocks':
+      default:
+        return <Building2 color={colors.primary} size={16} />;
+    }
+  };
+
   const renderSuggestionItem = ({ item }: { item: Asset }) => {
     const isPositive = item.changePercent >= 0;
     
@@ -108,9 +120,12 @@ export default function SymbolSearch({
         testID={`symbol-suggestion-${item.symbol}`}
       >
         <View style={styles.suggestionLeft}>
-          <Text style={[styles.suggestionSymbol, { color: colors.text }]}>
-            {item.symbol}
-          </Text>
+          <View style={styles.suggestionSymbolRow}>
+            {getAssetTypeIcon(item.category)}
+            <Text style={[styles.suggestionSymbol, { color: colors.text }]}>
+              {item.symbol}
+            </Text>
+          </View>
           <Text style={[styles.suggestionName, { color: colors.textSecondary }]}>
             {item.name}
           </Text>
@@ -224,10 +239,14 @@ const styles = StyleSheet.create({
   suggestionLeft: {
     flex: 1,
   },
+  suggestionSymbolRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
   suggestionSymbol: {
     fontSize: 16,
     fontWeight: "600",
-    marginBottom: 2,
   },
   suggestionName: {
     fontSize: 14,

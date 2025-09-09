@@ -15,9 +15,10 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "@/providers/ThemeProvider";
 import { useLanguage } from "@/providers/LanguageProvider";
 import { usePortfolio } from "@/providers/PortfolioProvider";
-import { Calendar, DollarSign, Hash } from "lucide-react-native";
+import { Calendar, DollarSign, Hash, Bitcoin, Building2 } from "lucide-react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import SymbolSearch from "@/components/SymbolSearch";
+import Toast from "@/components/Toast";
 
 export default function AddTransactionScreen() {
   const { colors } = useTheme();
@@ -33,6 +34,26 @@ export default function AddTransactionScreen() {
   const [price, setPrice] = useState(params.preselectedPrice as string || "");
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
   const [notes, setNotes] = useState("");
+  const [assetType, setAssetType] = useState<"crypto" | "forex" | "stock">("stock");
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState("");
+
+  const detectAssetType = (symbol: string): "crypto" | "forex" | "stock" => {
+    const upperSymbol = symbol.toUpperCase();
+    
+    // Crypto detection
+    if (['BTC', 'ETH', 'ADA', 'DOT', 'SOL', 'AVAX', 'MATIC', 'LINK', 'UNI', 'AAVE'].includes(upperSymbol)) {
+      return 'crypto';
+    }
+    
+    // Forex detection
+    if (upperSymbol.includes('/') || upperSymbol.includes('USD') || upperSymbol.includes('EUR') || upperSymbol.includes('GBP') || upperSymbol.includes('JPY') || upperSymbol.includes('TRY')) {
+      return 'forex';
+    }
+    
+    // Default to stock
+    return 'stock';
+  };
 
   const handleSymbolSelect = (selectedSymbol: string, currentPrice: number, name?: string) => {
     console.log('AddTransaction: Symbol selected', { selectedSymbol, currentPrice, name });
@@ -41,7 +62,12 @@ export default function AddTransactionScreen() {
     if (name) {
       setAssetName(name);
     }
-    console.log('AddTransaction: State updated', { symbol: selectedSymbol, price: currentPrice.toString(), assetName: name });
+    
+    // Detect and set asset type
+    const detectedType = detectAssetType(selectedSymbol);
+    setAssetType(detectedType);
+    
+    console.log('AddTransaction: State updated', { symbol: selectedSymbol, price: currentPrice.toString(), assetName: name, assetType: detectedType });
   };
 
   const getCurrentHolding = () => {
@@ -108,13 +134,14 @@ export default function AddTransactionScreen() {
       
       const successMessage = transactionType === 'buy' ? 'Varlık başarıyla satın alındı!' : 'Varlık başarıyla satıldı!';
       
-      if (Platform.OS === 'web') {
-        alert(successMessage);
-      } else {
-        Alert.alert('Başarılı', successMessage, [{ text: 'Tamam' }]);
-      }
+      // Show toast instead of alert
+      setToastMessage(successMessage);
+      setShowToast(true);
       
-      router.back();
+      // Navigate back after a short delay
+      setTimeout(() => {
+        router.back();
+      }, 1000);
     } catch (error) {
       console.error('Error adding transaction:', error);
       const errorMessage = error instanceof Error ? error.message : 'İşlem eklenirken bir hata oluştu';
@@ -174,10 +201,31 @@ export default function AddTransactionScreen() {
 
             <SymbolSearch
               value={symbol}
-              onChangeText={setSymbol}
+              onChangeText={(text) => {
+                setSymbol(text);
+                if (text) {
+                  const detectedType = detectAssetType(text);
+                  setAssetType(detectedType);
+                }
+              }}
               onSelectSymbol={handleSymbolSelect}
               placeholder={t("transaction.symbol")}
             />
+            
+            {symbol && (
+              <View style={[styles.assetTypePreview, { backgroundColor: colors.card }]}>
+                <View style={styles.assetTypeIcon}>
+                  {assetType === 'crypto' && <Bitcoin color={colors.primary} size={16} />}
+                  {assetType === 'forex' && <DollarSign color={colors.primary} size={16} />}
+                  {assetType === 'stock' && <Building2 color={colors.primary} size={16} />}
+                </View>
+                <Text style={[styles.assetTypeText, { color: colors.textSecondary }]}>
+                  {assetType === 'crypto' && 'Kripto Para'}
+                  {assetType === 'forex' && 'Döviz'}
+                  {assetType === 'stock' && 'Hisse Senedi'}
+                </Text>
+              </View>
+            )}
 
             <View style={[styles.inputContainer, { backgroundColor: colors.card }]}>
               <Hash color={colors.textSecondary} size={20} />
@@ -249,6 +297,13 @@ export default function AddTransactionScreen() {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+      
+      <Toast
+        message={toastMessage}
+        visible={showToast}
+        onHide={() => setShowToast(false)}
+        type="success"
+      />
     </View>
   );
 }
@@ -322,5 +377,23 @@ const styles = StyleSheet.create({
   holdingText: {
     fontSize: 14,
     textAlign: "center",
+  },
+  assetTypePreview: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 16,
+    gap: 8,
+  },
+  assetTypeIcon: {
+    width: 24,
+    height: 24,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  assetTypeText: {
+    fontSize: 14,
+    fontWeight: "500",
   },
 });
