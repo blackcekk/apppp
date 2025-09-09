@@ -1,9 +1,9 @@
-import React from "react";
-import { StyleSheet, Text, View, TouchableOpacity } from "react-native";
+import React, { useState } from "react";
+import { StyleSheet, Text, View, TouchableOpacity, Platform, Alert } from "react-native";
 import { useTheme } from "@/providers/ThemeProvider";
 import { useCurrency } from "@/providers/CurrencyProvider";
 import { usePortfolio } from "@/providers/PortfolioProvider";
-import { TrendingUp, TrendingDown } from "lucide-react-native";
+import { TrendingUp, TrendingDown, Trash2 } from "lucide-react-native";
 import { Asset } from "@/types/portfolio";
 import { formatCurrency, formatPercentage } from "@/utils/formatters";
 
@@ -15,16 +15,53 @@ interface AssetCardProps {
 export default function AssetCard({ asset, onPress }: AssetCardProps) {
   const { colors } = useTheme();
   const { currentCurrency } = useCurrency();
-  const { hideBalances } = usePortfolio();
+  const { hideBalances, removeAsset } = usePortfolio();
+  const [showDeleteButton, setShowDeleteButton] = useState(false);
   
   const profit = (asset.currentPrice - asset.avgPrice) * asset.quantity;
   const profitPercentage = ((asset.currentPrice - asset.avgPrice) / asset.avgPrice) * 100;
   const isPositive = profit >= 0;
 
+  const handleLongPress = () => {
+    setShowDeleteButton(!showDeleteButton);
+  };
+
+  const handleDelete = () => {
+    if (Platform.OS === 'web') {
+      const confirmed = confirm(`${asset.symbol} varlığını portföyünüzden silmek istediğinizden emin misiniz?`);
+      if (confirmed) {
+        removeAsset(asset.id);
+      }
+      setShowDeleteButton(false);
+    } else {
+      Alert.alert(
+        "Varlığı Sil",
+        `${asset.symbol} varlığını portföyünüzden silmek istediğinizden emin misiniz?`,
+        [
+          {
+            text: "İptal",
+            style: "cancel",
+            onPress: () => setShowDeleteButton(false)
+          },
+          {
+            text: "Sil",
+            style: "destructive",
+            onPress: () => {
+              removeAsset(asset.id);
+              setShowDeleteButton(false);
+            }
+          }
+        ]
+      );
+    }
+  };
+
   return (
     <TouchableOpacity
       style={[styles.container, { backgroundColor: colors.card }]}
       onPress={onPress}
+      onLongPress={handleLongPress}
+      delayLongPress={500}
     >
       <View style={styles.left}>
         <View style={[styles.icon, { backgroundColor: colors.primary + "20" }]}>
@@ -41,19 +78,31 @@ export default function AssetCard({ asset, onPress }: AssetCardProps) {
       </View>
       
       <View style={styles.right}>
-        <Text style={[styles.value, { color: colors.text }]}>
-          {hideBalances ? "****" : formatCurrency(asset.currentPrice * asset.quantity, currentCurrency)}
-        </Text>
-        <View style={styles.profitContainer}>
-          {isPositive ? (
-            <TrendingUp color={colors.success} size={14} />
-          ) : (
-            <TrendingDown color={colors.error} size={14} />
-          )}
-          <Text style={[styles.profit, { color: isPositive ? colors.success : colors.error }]}>
-            {hideBalances ? "**%" : formatPercentage(profitPercentage)}
-          </Text>
-        </View>
+        {showDeleteButton ? (
+          <TouchableOpacity
+            style={[styles.deleteButton, { backgroundColor: colors.error }]}
+            onPress={handleDelete}
+          >
+            <Trash2 color="#FFFFFF" size={16} />
+            <Text style={styles.deleteButtonText}>Sil</Text>
+          </TouchableOpacity>
+        ) : (
+          <>
+            <Text style={[styles.value, { color: colors.text }]}>
+              {hideBalances ? "****" : formatCurrency(asset.currentPrice * asset.quantity, currentCurrency)}
+            </Text>
+            <View style={styles.profitContainer}>
+              {isPositive ? (
+                <TrendingUp color={colors.success} size={14} />
+              ) : (
+                <TrendingDown color={colors.error} size={14} />
+              )}
+              <Text style={[styles.profit, { color: isPositive ? colors.success : colors.error }]}>
+                {hideBalances ? "**%" : formatPercentage(profitPercentage)}
+              </Text>
+            </View>
+          </>
+        )}
       </View>
     </TouchableOpacity>
   );
@@ -108,5 +157,18 @@ const styles = StyleSheet.create({
   profit: {
     fontSize: 12,
     fontWeight: "500",
+  },
+  deleteButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    gap: 4,
+  },
+  deleteButtonText: {
+    color: "#FFFFFF",
+    fontSize: 12,
+    fontWeight: "600",
   },
 });

@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useCallback } from "react";
 import {
   StyleSheet,
   Text,
@@ -33,11 +33,15 @@ export default function PortfolioScreen() {
   const [refreshing, setRefreshing] = React.useState(false);
   const [selectedPeriod, setSelectedPeriod] = useState<ChartPeriod>('daily');
 
-  const generateHistoricalData = (period: ChartPeriod, currentValue: number) => {
+  const generatePortfolioHistoricalData = useCallback((period: ChartPeriod, currentValue: number) => {
     const now = new Date();
     let dataPoints: number[] = [];
     let labels: string[] = [];
     let numPoints = 0;
+    
+    // Calculate portfolio cost basis for realistic historical simulation
+    const totalCost = portfolio.reduce((sum, asset) => sum + (asset.quantity * asset.avgPrice), 0);
+    const profitMargin = totalCost > 0 ? (currentValue - totalCost) / totalCost : 0;
     
     switch (period) {
       case 'daily':
@@ -45,10 +49,15 @@ export default function PortfolioScreen() {
         for (let i = numPoints - 1; i >= 0; i--) {
           const hour = new Date(now.getTime() - i * 60 * 60 * 1000);
           labels.push(hour.getHours().toString().padStart(2, '0') + ':00');
-          // Generate realistic portfolio fluctuation (±5% from current value)
-          const variation = (Math.random() - 0.5) * 0.1; // ±5%
-          const baseValue = currentValue * (0.95 + Math.random() * 0.1); // Base variation
-          dataPoints.push(Math.max(0, baseValue * (1 + variation)));
+          
+          // Simulate realistic portfolio value changes throughout the day
+          const timeProgress = (numPoints - 1 - i) / (numPoints - 1);
+          const baseProgress = Math.sin(timeProgress * Math.PI * 2) * 0.02; // Small daily fluctuation
+          const randomVariation = (Math.random() - 0.5) * 0.015; // ±1.5% random
+          const progressToCurrentValue = timeProgress * profitMargin * 0.3; // Gradual approach to current profit
+          
+          const simulatedValue = totalCost * (1 + baseProgress + randomVariation + progressToCurrentValue);
+          dataPoints.push(Math.max(totalCost * 0.95, simulatedValue));
         }
         break;
         
@@ -56,11 +65,16 @@ export default function PortfolioScreen() {
         numPoints = 7; // 7 days
         for (let i = numPoints - 1; i >= 0; i--) {
           const day = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
-          labels.push(day.toLocaleDateString('en', { weekday: 'short' }));
-          // Generate weekly trend with more variation
-          const variation = (Math.random() - 0.5) * 0.15; // ±7.5%
-          const baseValue = currentValue * (0.9 + Math.random() * 0.2); // Base variation
-          dataPoints.push(Math.max(0, baseValue * (1 + variation)));
+          labels.push(day.toLocaleDateString('tr', { weekday: 'short' }));
+          
+          // Simulate weekly portfolio progression
+          const timeProgress = (numPoints - 1 - i) / (numPoints - 1);
+          const weeklyTrend = timeProgress * profitMargin * 0.7; // 70% of current profit over the week
+          const randomVariation = (Math.random() - 0.5) * 0.05; // ±5% random
+          const marketCycle = Math.sin(timeProgress * Math.PI * 3) * 0.02; // Market cycles
+          
+          const simulatedValue = totalCost * (1 + weeklyTrend + randomVariation + marketCycle);
+          dataPoints.push(Math.max(totalCost * 0.9, simulatedValue));
         }
         break;
         
@@ -68,28 +82,33 @@ export default function PortfolioScreen() {
         numPoints = 30; // 30 days
         for (let i = numPoints - 1; i >= 0; i--) {
           const day = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
-          if (i % 5 === 0 || i === numPoints - 1) { // Show every 5th day
+          if (i % 5 === 0 || i === numPoints - 1) {
             labels.push(day.getDate().toString());
           } else {
             labels.push('');
           }
-          // Generate monthly trend with significant variation
-          const variation = (Math.random() - 0.5) * 0.25; // ±12.5%
-          const baseValue = currentValue * (0.8 + Math.random() * 0.4); // Base variation
-          dataPoints.push(Math.max(0, baseValue * (1 + variation)));
+          
+          // Simulate monthly portfolio growth/decline
+          const timeProgress = (numPoints - 1 - i) / (numPoints - 1);
+          const monthlyTrend = timeProgress * profitMargin; // Full profit progression over month
+          const randomVariation = (Math.random() - 0.5) * 0.08; // ±8% random
+          const longTermCycle = Math.sin(timeProgress * Math.PI * 2) * 0.03; // Longer market cycles
+          
+          const simulatedValue = totalCost * (1 + monthlyTrend + randomVariation + longTermCycle);
+          dataPoints.push(Math.max(totalCost * 0.8, simulatedValue));
         }
         break;
     }
     
-    // Ensure the last data point is close to current value
+    // Ensure the last data point matches current portfolio value
     dataPoints[dataPoints.length - 1] = currentValue;
     
     return { data: dataPoints, labels };
-  };
+  }, [portfolio]);
 
   const chartData = useMemo(() => {
-    return generateHistoricalData(selectedPeriod, totalValue);
-  }, [selectedPeriod, totalValue]);
+    return generatePortfolioHistoricalData(selectedPeriod, totalValue);
+  }, [selectedPeriod, totalValue, generatePortfolioHistoricalData]);
 
   const handleRefresh = async () => {
     setRefreshing(true);

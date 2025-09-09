@@ -8,6 +8,7 @@ import {
   TextInput,
   KeyboardAvoidingView,
   Platform,
+  Alert,
 } from "react-native";
 
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -86,7 +87,13 @@ export default function AddTransactionScreen() {
     setNotes('');
     
     console.log('Transaction added, navigating back');
-    alert('İşlem başarıyla eklendi!');
+    
+    if (Platform.OS === 'web') {
+      alert('İşlem başarıyla eklendi!');
+    } else {
+      Alert.alert('Başarılı', 'İşlem başarıyla eklendi!', [{ text: 'Tamam' }]);
+    }
+    
     router.back();
   };
 

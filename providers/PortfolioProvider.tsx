@@ -126,6 +126,13 @@ export const [PortfolioProvider, usePortfolio] = createContextHook(() => {
     saveMutate({ portfolio: updatedPortfolio, transactions: updatedTransactions });
   }, [portfolio, transactions, saveMutate]);
 
+  const removeAsset = useCallback((assetId: string) => {
+    console.log('PortfolioProvider: Removing asset', assetId);
+    const updatedPortfolio = portfolio.filter(asset => asset.id !== assetId);
+    setPortfolio(updatedPortfolio);
+    saveMutate({ portfolio: updatedPortfolio });
+  }, [portfolio, saveMutate]);
+
   const toggleHideBalances = useCallback(async () => {
     const newValue = !hideBalances;
     setHideBalances(newValue);
@@ -147,6 +154,7 @@ export const [PortfolioProvider, usePortfolio] = createContextHook(() => {
     portfolio,
     transactions,
     addTransaction,
+    removeAsset,
     totalValue,
     totalProfit,
     profitPercentage,
@@ -154,5 +162,5 @@ export const [PortfolioProvider, usePortfolio] = createContextHook(() => {
     isLoading,
     hideBalances,
     toggleHideBalances,
-  }), [portfolio, transactions, addTransaction, totalValue, totalProfit, profitPercentage, refreshPortfolio, isLoading, hideBalances, toggleHideBalances]);
+  }), [portfolio, transactions, addTransaction, removeAsset, totalValue, totalProfit, profitPercentage, refreshPortfolio, isLoading, hideBalances, toggleHideBalances]);
 });
