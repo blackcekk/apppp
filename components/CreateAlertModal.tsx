@@ -16,6 +16,7 @@ import { useLanguage } from "@/providers/LanguageProvider";
 import { useAlerts } from "@/providers/AlertProvider";
 import { NotificationType } from "@/types/alert";
 import { X, Bell, AlarmClock, Smartphone } from "lucide-react-native";
+import SymbolSearch from "@/components/SymbolSearch";
 
 interface CreateAlertModalProps {
   visible: boolean;
@@ -32,6 +33,13 @@ export default function CreateAlertModal({ visible, onClose }: CreateAlertModalP
   const [type, setType] = useState<"above" | "below">("above");
   const [note, setNote] = useState("");
   const [notificationType, setNotificationType] = useState<NotificationType>("app");
+
+  const handleSymbolSelect = (selectedSymbol: string, currentPrice: number) => {
+    setSymbol(selectedSymbol);
+    if (!targetPrice) {
+      setTargetPrice(currentPrice.toString());
+    }
+  };
 
   const handleCreate = async () => {
     if (!symbol || !targetPrice) return;
@@ -69,6 +77,7 @@ export default function CreateAlertModal({ visible, onClose }: CreateAlertModalP
     setTargetPrice("");
     setNote("");
     setNotificationType("app");
+    setType("above");
     onClose();
   };
 
@@ -113,13 +122,11 @@ export default function CreateAlertModal({ visible, onClose }: CreateAlertModalP
           </View>
 
           <ScrollView showsVerticalScrollIndicator={false}>
-            <TextInput
-              style={[styles.input, { backgroundColor: colors.card, color: colors.text }]}
-              placeholder={t("alerts.symbol")}
-              placeholderTextColor={colors.textSecondary}
+            <SymbolSearch
               value={symbol}
               onChangeText={setSymbol}
-              autoCapitalize="characters"
+              onSelectSymbol={handleSymbolSelect}
+              placeholder={t("alerts.symbol")}
             />
 
             <View style={styles.typeSelector}>
