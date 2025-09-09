@@ -12,6 +12,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "@/providers/ThemeProvider";
 import { useLanguage } from "@/providers/LanguageProvider";
 import { useCurrency } from "@/providers/CurrencyProvider";
+import { useAuth } from "@/providers/AuthProvider";
 import {
   User,
   Globe,
@@ -30,7 +31,13 @@ export default function ProfileScreen() {
   const { colors, isDark, toggleTheme } = useTheme();
   const { t, currentLanguage, changeLanguage } = useLanguage();
   const { currentCurrency, changeCurrency } = useCurrency();
+  const { user, logout } = useAuth();
   const insets = useSafeAreaInsets();
+
+  const handleLogout = async () => {
+    await logout();
+    router.replace('/login');
+  };
 
   const menuItems = [
     {
@@ -84,8 +91,8 @@ export default function ProfileScreen() {
           <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
             <User color="#FFFFFF" size={32} />
           </View>
-          <Text style={[styles.name, { color: colors.text }]}>John Doe</Text>
-          <Text style={[styles.email, { color: colors.textSecondary }]}>john.doe@example.com</Text>
+          <Text style={[styles.name, { color: colors.text }]}>{user?.name || 'User'}</Text>
+          <Text style={[styles.email, { color: colors.textSecondary }]}>{user?.email || 'user@example.com'}</Text>
         </View>
 
         <View style={[styles.themeToggle, { backgroundColor: colors.card }]}>
@@ -124,7 +131,10 @@ export default function ProfileScreen() {
           ))}
         </View>
 
-        <TouchableOpacity style={[styles.logoutButton, { backgroundColor: colors.card }]}>
+        <TouchableOpacity 
+          style={[styles.logoutButton, { backgroundColor: colors.card }]}
+          onPress={handleLogout}
+        >
           <LogOut color={colors.error} size={20} />
           <Text style={[styles.logoutText, { color: colors.error }]}>{t("profile.logout")}</Text>
         </TouchableOpacity>
