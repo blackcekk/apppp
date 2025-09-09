@@ -15,7 +15,6 @@ export function TransactionList({ transactions, onTransactionPress }: Transactio
   const { colors } = useTheme();
   const { getCurrencySymbol } = useCurrency();
 
-  
   const renderTransaction = ({ item }: { item: Transaction }) => {
     const isBuy = item.side === 'buy';
     const Icon = isBuy ? ArrowDownCircle : ArrowUpCircle;
