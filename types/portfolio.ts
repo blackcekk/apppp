@@ -10,18 +10,38 @@ export interface Asset {
   profitPercentage: number;
   type?: 'crypto' | 'stock' | 'commodity' | 'forex';
   currency?: string;
+  targetWeight?: number;
 }
 
 export interface Transaction {
   id: string;
-  assetId?: string;
-  type: "buy" | "sell";
   symbol: string;
+  side: 'buy' | 'sell' | 'dividend' | 'fee';
   quantity: number;
   price: number;
-  fee?: number;
+  fee: number;
+  note: string;
+  attachments: string[];
   date: string;
-  notes?: string;
+}
+
+export interface DCAPlan {
+  id: string;
+  symbol: string;
+  frequency: 'weekly' | 'biweekly' | 'monthly';
+  amountType: 'cash' | 'units';
+  amount: number;
+  nextRunAt: string;
+  isActive: boolean;
+}
+
+export interface ActionLog {
+  id: string;
+  type: 'add_asset' | 'remove_asset' | 'add_transaction' | 'edit_transaction' | 'remove_transaction' | 'add_dca_plan' | 'remove_dca_plan';
+  description: string;
+  data: any;
+  timestamp: string;
+  canUndo: boolean;
 }
 
 export interface Portfolio {

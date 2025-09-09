@@ -17,7 +17,7 @@ export function TransactionList({ transactions, onTransactionPress }: Transactio
 
   
   const renderTransaction = ({ item }: { item: Transaction }) => {
-    const isBuy = item.type === 'buy';
+    const isBuy = item.side === 'buy';
     const Icon = isBuy ? ArrowDownCircle : ArrowUpCircle;
     const color = isBuy ? colors.success : colors.error;
     
@@ -50,20 +50,20 @@ export function TransactionList({ transactions, onTransactionPress }: Transactio
           
           {item.fee && item.fee > 0 && (
             <Text style={[styles.fee, { color: colors.textSecondary }]}>
-              Fee: {getCurrencySymbol()}{item.fee?.toFixed(2)}
+              Fee: {getCurrencySymbol()}{item.fee.toFixed(2)}
             </Text>
           )}
           
-          {item.notes && (
+          {item.note && (
             <Text style={[styles.notes, { color: colors.textSecondary }]} numberOfLines={1}>
-              {item.notes}
+              {item.note}
             </Text>
           )}
         </View>
         
         <View style={styles.totalContainer}>
           <Text style={[styles.total, { color: colors.text }]}>
-            {getCurrencySymbol()}{(item.quantity * item.price + (item.fee || 0)).toFixed(2)}
+            {getCurrencySymbol()}{(item.quantity * item.price + item.fee).toFixed(2)}
           </Text>
         </View>
       </TouchableOpacity>
