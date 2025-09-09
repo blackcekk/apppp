@@ -8,7 +8,6 @@ import {
   TextInput,
   KeyboardAvoidingView,
   Platform,
-  Alert,
 } from "react-native";
 
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -37,6 +36,7 @@ export default function AddTransactionScreen() {
   const [assetType, setAssetType] = useState<"crypto" | "forex" | "stock">("stock");
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
+  const [toastType, setToastType] = useState<"success" | "error">("success");
 
   const detectAssetType = (symbol: string): "crypto" | "forex" | "stock" => {
     const upperSymbol = symbol.toUpperCase();
@@ -83,11 +83,9 @@ export default function AddTransactionScreen() {
     
     if (!symbol || !quantity || !price) {
       console.log('Validation failed:', { symbol: !!symbol, quantity: !!quantity, price: !!price });
-      if (Platform.OS === 'web') {
-        alert(`Lütfen tüm alanları doldurun:\nSembol: ${symbol || 'Boş'}\nMiktar: ${quantity || 'Boş'}\nFiyat: ${price || 'Boş'}`);
-      } else {
-        Alert.alert('Hata', `Lütfen tüm alanları doldurun:\nSembol: ${symbol || 'Boş'}\nMiktar: ${quantity || 'Boş'}\nFiyat: ${price || 'Boş'}`);
-      }
+      setToastMessage('Lütfen tüm alanları doldurun');
+      setToastType('error');
+      setShowToast(true);
       return;
     }
 
@@ -96,11 +94,9 @@ export default function AddTransactionScreen() {
     
     if (isNaN(quantityNum) || isNaN(priceNum) || quantityNum <= 0 || priceNum <= 0) {
       console.log('Invalid numbers:', { quantityNum, priceNum });
-      if (Platform.OS === 'web') {
-        alert(`Geçersiz sayılar:\nMiktar: ${quantityNum}\nFiyat: ${priceNum}`);
-      } else {
-        Alert.alert('Hata', `Geçersiz sayılar:\nMiktar: ${quantityNum}\nFiyat: ${priceNum}`);
-      }
+      setToastMessage('Geçersiz sayılar girdiniz');
+      setToastType('error');
+      setShowToast(true);
       return;
     }
 
@@ -134,8 +130,9 @@ export default function AddTransactionScreen() {
       
       const successMessage = transactionType === 'buy' ? 'Varlık başarıyla satın alındı!' : 'Varlık başarıyla satıldı!';
       
-      // Show toast instead of alert
+      // Show success toast
       setToastMessage(successMessage);
+      setToastType('success');
       setShowToast(true);
       
       // Navigate back after a short delay
@@ -146,11 +143,9 @@ export default function AddTransactionScreen() {
       console.error('Error adding transaction:', error);
       const errorMessage = error instanceof Error ? error.message : 'İşlem eklenirken bir hata oluştu';
       
-      if (Platform.OS === 'web') {
-        alert(errorMessage);
-      } else {
-        Alert.alert('Hata', errorMessage, [{ text: 'Tamam' }]);
-      }
+      setToastMessage(errorMessage);
+      setToastType('error');
+      setShowToast(true);
     }
   };
 
@@ -302,7 +297,7 @@ export default function AddTransactionScreen() {
         message={toastMessage}
         visible={showToast}
         onHide={() => setShowToast(false)}
-        type="success"
+        type={toastType}
       />
     </View>
   );
