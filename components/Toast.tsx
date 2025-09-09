@@ -2,9 +2,10 @@ import React, { useEffect, useRef } from "react";
 import {
   StyleSheet,
   Text,
+  View,
   Animated,
 } from "react-native";
-import { CheckCircle } from "lucide-react-native";
+import { CheckCircle, AlertCircle } from "lucide-react-native";
 import { useTheme } from "@/providers/ThemeProvider";
 
 interface ToastProps {
@@ -70,8 +71,16 @@ export default function Toast({ message, visible, onHide, type = "success" }: To
         },
       ]}
     >
-      <CheckCircle color="#FFFFFF" size={20} />
-      <Text style={styles.message}>{message}</Text>
+      <View style={styles.iconContainer}>
+        {type === "success" ? (
+          <CheckCircle color="#FFFFFF" size={20} />
+        ) : (
+          <AlertCircle color="#FFFFFF" size={20} />
+        )}
+      </View>
+      <View style={styles.messageContainer}>
+        <Text style={styles.message}>{message}</Text>
+      </View>
     </Animated.View>
   );
 }
@@ -87,7 +96,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderRadius: 12,
-    gap: 8,
     zIndex: 9999,
     elevation: 10,
     shadowColor: "#000",
@@ -98,10 +106,15 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 4.65,
   },
+  iconContainer: {
+    marginRight: 8,
+  },
+  messageContainer: {
+    flex: 1,
+  },
   message: {
     color: "#FFFFFF",
     fontSize: 14,
     fontWeight: "500",
-    flex: 1,
   },
 });
