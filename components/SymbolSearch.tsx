@@ -27,7 +27,7 @@ interface Asset {
 interface SymbolSearchProps {
   value: string;
   onChangeText: (text: string) => void;
-  onSelectSymbol: (symbol: string, price: number) => void;
+  onSelectSymbol: (symbol: string, price: number, name?: string) => void;
   placeholder?: string;
 }
 
@@ -83,10 +83,10 @@ export default function SymbolSearch({
     
     try {
       const currentPrice = await getSymbolPrice(asset.symbol);
-      onSelectSymbol(asset.symbol, currentPrice || asset.price);
+      onSelectSymbol(asset.symbol, currentPrice || asset.price, asset.name);
     } catch (error) {
       console.error("Price fetch error:", error);
-      onSelectSymbol(asset.symbol, asset.price);
+      onSelectSymbol(asset.symbol, asset.price, asset.name);
     }
   };
 

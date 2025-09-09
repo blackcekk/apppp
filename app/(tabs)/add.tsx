@@ -26,30 +26,62 @@ export default function AddTransactionScreen() {
   
   const [transactionType, setTransactionType] = useState<"buy" | "sell">("buy");
   const [symbol, setSymbol] = useState("");
+  const [assetName, setAssetName] = useState("");
   const [quantity, setQuantity] = useState("");
   const [price, setPrice] = useState("");
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
   const [notes, setNotes] = useState("");
 
-  const handleSymbolSelect = (selectedSymbol: string, currentPrice: number) => {
+  const handleSymbolSelect = (selectedSymbol: string, currentPrice: number, name?: string) => {
     setSymbol(selectedSymbol);
     setPrice(currentPrice.toString());
+    if (name) {
+      setAssetName(name);
+    }
   };
 
   const handleSubmit = () => {
+    console.log('Submit pressed', { symbol, quantity, price, transactionType });
+    
     if (!symbol || !quantity || !price) {
+      console.log('Validation failed:', { symbol: !!symbol, quantity: !!quantity, price: !!price });
       return;
     }
 
-    addTransaction({
+    const quantityNum = parseFloat(quantity);
+    const priceNum = parseFloat(price);
+    
+    if (isNaN(quantityNum) || isNaN(priceNum) || quantityNum <= 0 || priceNum <= 0) {
+      console.log('Invalid numbers:', { quantityNum, priceNum });
+      return;
+    }
+
+    console.log('Adding transaction:', {
       type: transactionType,
       symbol: symbol.toUpperCase(),
-      quantity: parseFloat(quantity),
-      price: parseFloat(price),
+      quantity: quantityNum,
+      price: priceNum,
       date,
       notes,
     });
 
+    addTransaction({
+      type: transactionType,
+      symbol: symbol.toUpperCase(),
+      quantity: quantityNum,
+      price: priceNum,
+      date,
+      notes,
+    });
+
+    // Clear form
+    setSymbol('');
+    setAssetName('');
+    setQuantity('');
+    setPrice('');
+    setNotes('');
+    
+    console.log('Transaction added, navigating back');
     router.back();
   };
 

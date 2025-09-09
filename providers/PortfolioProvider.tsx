@@ -58,6 +58,10 @@ export const [PortfolioProvider, usePortfolio] = createContextHook(() => {
   const { mutate: saveMutate } = saveMutation;
 
   const addTransaction = useCallback((transaction: Omit<Transaction, "id">) => {
+    console.log('PortfolioProvider: Adding transaction', transaction);
+    console.log('Current portfolio:', portfolio);
+    console.log('Current transactions:', transactions);
+    
     const newTransaction: Transaction = {
       ...transaction,
       id: Date.now().toString(),
@@ -65,9 +69,11 @@ export const [PortfolioProvider, usePortfolio] = createContextHook(() => {
     
     const updatedTransactions = [...transactions, newTransaction];
     setTransactions(updatedTransactions);
+    console.log('Updated transactions:', updatedTransactions);
     
     // Update portfolio based on transaction
     const existingAsset = portfolio.find(a => a.symbol === transaction.symbol);
+    console.log('Existing asset:', existingAsset);
     let updatedPortfolio: Asset[];
     
     if (existingAsset) {
@@ -81,12 +87,18 @@ export const [PortfolioProvider, usePortfolio] = createContextHook(() => {
             ? (asset.avgPrice * asset.quantity + transaction.price * transaction.quantity) / newQuantity
             : asset.avgPrice;
           
-          return {
+          const updatedAsset = {
             ...asset,
             quantity: newQuantity,
             avgPrice: newAvgPrice,
             currentPrice: asset.currentPrice || transaction.price,
+            value: newQuantity * (asset.currentPrice || transaction.price),
+            profit: (newQuantity * (asset.currentPrice || transaction.price)) - (newQuantity * newAvgPrice),
+            profitPercentage: newAvgPrice > 0 ? (((asset.currentPrice || transaction.price) - newAvgPrice) / newAvgPrice) * 100 : 0,
           };
+          
+          console.log('Updated existing asset:', updatedAsset);
+          return updatedAsset;
         }
         return asset;
       });
@@ -94,7 +106,7 @@ export const [PortfolioProvider, usePortfolio] = createContextHook(() => {
       const newAsset: Asset = {
         id: Date.now().toString(),
         symbol: transaction.symbol,
-        name: transaction.symbol,
+        name: transaction.symbol, // Will be updated with proper name from market data
         quantity: transaction.quantity,
         avgPrice: transaction.price,
         currentPrice: transaction.price,
@@ -102,11 +114,14 @@ export const [PortfolioProvider, usePortfolio] = createContextHook(() => {
         profit: 0,
         profitPercentage: 0,
       };
+      console.log('Creating new asset:', newAsset);
       updatedPortfolio = [...portfolio, newAsset];
     } else {
+      console.log('Sell transaction for non-existing asset, ignoring');
       updatedPortfolio = portfolio;
     }
     
+    console.log('Updated portfolio:', updatedPortfolio);
     setPortfolio(updatedPortfolio);
     saveMutate({ portfolio: updatedPortfolio, transactions: updatedTransactions });
   }, [portfolio, transactions, saveMutate]);
