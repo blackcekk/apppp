@@ -23,6 +23,10 @@ export const translations = {
       totalInvested: "Total Invested",
       currentValue: "Current Value",
       totalProfit: "Total Profit",
+      daily: "Daily",
+      weekly: "Weekly",
+      monthly: "Monthly",
+      chartPeriod: "Chart Period",
     },
     markets: {
       all: "All",
@@ -124,6 +128,10 @@ export const translations = {
       totalInvested: "Toplam Yatırım",
       currentValue: "Güncel Değer",
       totalProfit: "Toplam Kar",
+      daily: "Günlük",
+      weekly: "Haftalık",
+      monthly: "Aylık",
+      chartPeriod: "Grafik Dönemi",
     },
     markets: {
       all: "Tümü",
