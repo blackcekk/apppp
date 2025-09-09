@@ -32,6 +32,9 @@ export const translations = {
       commodities: "Commodities",
       search: "Search markets...",
     },
+    search: {
+      noResults: "No results found",
+    },
     transaction: {
       addNew: "Add Transaction",
       buy: "Buy",
@@ -122,6 +125,9 @@ export const translations = {
       forex: "Döviz",
       commodities: "Emtia",
       search: "Piyasalarda ara...",
+    },
+    search: {
+      noResults: "Sonuç bulunamadı",
     },
     transaction: {
       addNew: "İşlem Ekle",

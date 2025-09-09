@@ -14,8 +14,9 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "@/providers/ThemeProvider";
 import { useLanguage } from "@/providers/LanguageProvider";
 import { usePortfolio } from "@/providers/PortfolioProvider";
-import { Calendar, DollarSign, Hash, TrendingUp } from "lucide-react-native";
+import { Calendar, DollarSign, Hash } from "lucide-react-native";
 import { router } from "expo-router";
+import SymbolSearch from "@/components/SymbolSearch";
 
 export default function AddTransactionScreen() {
   const { colors } = useTheme();
@@ -29,6 +30,11 @@ export default function AddTransactionScreen() {
   const [price, setPrice] = useState("");
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
   const [notes, setNotes] = useState("");
+
+  const handleSymbolSelect = (selectedSymbol: string, currentPrice: number) => {
+    setSymbol(selectedSymbol);
+    setPrice(currentPrice.toString());
+  };
 
   const handleSubmit = () => {
     if (!symbol || !quantity || !price) {
@@ -92,17 +98,12 @@ export default function AddTransactionScreen() {
               </TouchableOpacity>
             </View>
 
-            <View style={[styles.inputContainer, { backgroundColor: colors.card }]}>
-              <TrendingUp color={colors.textSecondary} size={20} />
-              <TextInput
-                style={[styles.input, { color: colors.text }]}
-                placeholder={t("transaction.symbol")}
-                placeholderTextColor={colors.textSecondary}
-                value={symbol}
-                onChangeText={setSymbol}
-                autoCapitalize="characters"
-              />
-            </View>
+            <SymbolSearch
+              value={symbol}
+              onChangeText={setSymbol}
+              onSelectSymbol={handleSymbolSelect}
+              placeholder={t("transaction.symbol")}
+            />
 
             <View style={[styles.inputContainer, { backgroundColor: colors.card }]}>
               <Hash color={colors.textSecondary} size={20} />
