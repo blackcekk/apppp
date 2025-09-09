@@ -22,7 +22,7 @@ import SymbolSearch from "@/components/SymbolSearch";
 export default function AddTransactionScreen() {
   const { colors } = useTheme();
   const { t } = useLanguage();
-  const { addTransaction } = usePortfolio();
+  const { addTransaction, portfolio } = usePortfolio();
   const insets = useSafeAreaInsets();
   
   const [transactionType, setTransactionType] = useState<"buy" | "sell">("buy");
@@ -43,12 +43,24 @@ export default function AddTransactionScreen() {
     console.log('AddTransaction: State updated', { symbol: selectedSymbol, price: currentPrice.toString(), assetName: name });
   };
 
+  const getCurrentHolding = () => {
+    if (!symbol || transactionType !== 'sell') return null;
+    const asset = portfolio.find(a => a.symbol.toUpperCase() === symbol.toUpperCase());
+    return asset ? asset.quantity : 0;
+  };
+
+  const currentHolding = getCurrentHolding();
+
   const handleSubmit = () => {
     console.log('Submit pressed', { symbol, quantity, price, transactionType });
     
     if (!symbol || !quantity || !price) {
       console.log('Validation failed:', { symbol: !!symbol, quantity: !!quantity, price: !!price });
-      alert(`Lütfen tüm alanları doldurun:\nSembol: ${symbol || 'Boş'}\nMiktar: ${quantity || 'Boş'}\nFiyat: ${price || 'Boş'}`);
+      if (Platform.OS === 'web') {
+        alert(`Lütfen tüm alanları doldurun:\nSembol: ${symbol || 'Boş'}\nMiktar: ${quantity || 'Boş'}\nFiyat: ${price || 'Boş'}`);
+      } else {
+        Alert.alert('Hata', `Lütfen tüm alanları doldurun:\nSembol: ${symbol || 'Boş'}\nMiktar: ${quantity || 'Boş'}\nFiyat: ${price || 'Boş'}`);
+      }
       return;
     }
 
@@ -57,7 +69,11 @@ export default function AddTransactionScreen() {
     
     if (isNaN(quantityNum) || isNaN(priceNum) || quantityNum <= 0 || priceNum <= 0) {
       console.log('Invalid numbers:', { quantityNum, priceNum });
-      alert(`Geçersiz sayılar:\nMiktar: ${quantityNum}\nFiyat: ${priceNum}`);
+      if (Platform.OS === 'web') {
+        alert(`Geçersiz sayılar:\nMiktar: ${quantityNum}\nFiyat: ${priceNum}`);
+      } else {
+        Alert.alert('Hata', `Geçersiz sayılar:\nMiktar: ${quantityNum}\nFiyat: ${priceNum}`);
+      }
       return;
     }
 
@@ -70,31 +86,44 @@ export default function AddTransactionScreen() {
       notes,
     });
 
-    addTransaction({
-      type: transactionType,
-      symbol: symbol.toUpperCase(),
-      quantity: quantityNum,
-      price: priceNum,
-      date,
-      notes,
-    });
+    try {
+      addTransaction({
+        type: transactionType,
+        symbol: symbol.toUpperCase(),
+        quantity: quantityNum,
+        price: priceNum,
+        date,
+        notes,
+      });
 
-    // Clear form
-    setSymbol('');
-    setAssetName('');
-    setQuantity('');
-    setPrice('');
-    setNotes('');
-    
-    console.log('Transaction added, navigating back');
-    
-    if (Platform.OS === 'web') {
-      alert('İşlem başarıyla eklendi!');
-    } else {
-      Alert.alert('Başarılı', 'İşlem başarıyla eklendi!', [{ text: 'Tamam' }]);
+      // Clear form
+      setSymbol('');
+      setAssetName('');
+      setQuantity('');
+      setPrice('');
+      setNotes('');
+      
+      console.log('Transaction added, navigating back');
+      
+      const successMessage = transactionType === 'buy' ? 'Varlık başarıyla satın alındı!' : 'Varlık başarıyla satıldı!';
+      
+      if (Platform.OS === 'web') {
+        alert(successMessage);
+      } else {
+        Alert.alert('Başarılı', successMessage, [{ text: 'Tamam' }]);
+      }
+      
+      router.back();
+    } catch (error) {
+      console.error('Error adding transaction:', error);
+      const errorMessage = error instanceof Error ? error.message : 'İşlem eklenirken bir hata oluştu';
+      
+      if (Platform.OS === 'web') {
+        alert(errorMessage);
+      } else {
+        Alert.alert('Hata', errorMessage, [{ text: 'Tamam' }]);
+      }
     }
-    
-    router.back();
   };
 
   return (
@@ -160,6 +189,22 @@ export default function AddTransactionScreen() {
                 keyboardType="decimal-pad"
               />
             </View>
+            
+            {transactionType === 'sell' && currentHolding !== null && currentHolding > 0 && (
+              <View style={[styles.holdingInfo, { backgroundColor: colors.card }]}>
+                <Text style={[styles.holdingText, { color: colors.textSecondary }]}>
+                  Mevcut miktar: {currentHolding}
+                </Text>
+              </View>
+            )}
+            
+            {transactionType === 'sell' && currentHolding === 0 && symbol && (
+              <View style={[styles.holdingInfo, { backgroundColor: colors.error + '20' }]}>
+                <Text style={[styles.holdingText, { color: colors.error }]}>
+                  Bu varlığa sahip değilsiniz
+                </Text>
+              </View>
+            )}
 
             <View style={[styles.inputContainer, { backgroundColor: colors.card }]}>
               <DollarSign color={colors.textSecondary} size={20} />
@@ -267,5 +312,14 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 16,
     fontWeight: "600",
+  },
+  holdingInfo: {
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 16,
+  },
+  holdingText: {
+    fontSize: 14,
+    textAlign: "center",
   },
 });

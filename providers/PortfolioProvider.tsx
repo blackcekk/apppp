@@ -62,6 +62,17 @@ export const [PortfolioProvider, usePortfolio] = createContextHook(() => {
     console.log('Current portfolio:', portfolio);
     console.log('Current transactions:', transactions);
     
+    // Check if selling and validate quantity
+    if (transaction.type === "sell") {
+      const existingAsset = portfolio.find(a => a.symbol === transaction.symbol);
+      if (!existingAsset) {
+        throw new Error(`Bu varlığa sahip değilsiniz: ${transaction.symbol}`);
+      }
+      if (existingAsset.quantity < transaction.quantity) {
+        throw new Error(`Yetersiz miktar. Mevcut: ${existingAsset.quantity}, Satmak istenen: ${transaction.quantity}`);
+      }
+    }
+    
     const newTransaction: Transaction = {
       ...transaction,
       id: Date.now().toString(),
@@ -101,7 +112,7 @@ export const [PortfolioProvider, usePortfolio] = createContextHook(() => {
           return updatedAsset;
         }
         return asset;
-      });
+      }).filter(asset => asset.quantity > 0); // Remove assets with 0 quantity
     } else if (transaction.type === "buy") {
       const newAsset: Asset = {
         id: Date.now().toString(),
@@ -117,7 +128,7 @@ export const [PortfolioProvider, usePortfolio] = createContextHook(() => {
       console.log('Creating new asset:', newAsset);
       updatedPortfolio = [...portfolio, newAsset];
     } else {
-      console.log('Sell transaction for non-existing asset, ignoring');
+      console.log('Sell transaction for non-existing asset, should not reach here');
       updatedPortfolio = portfolio;
     }
     
