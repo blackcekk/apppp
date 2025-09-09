@@ -30,10 +30,10 @@ export default function AssetDetailScreen() {
   }, [portfolio, id]);
   
   const assetTransactions = useMemo(() => {
-    return transactions.filter(t => t.assetId === id).sort((a, b) => 
+    return transactions.filter(t => t.symbol === asset?.symbol).sort((a, b) => 
       new Date(b.date).getTime() - new Date(a.date).getTime()
     );
-  }, [transactions, id]);
+  }, [transactions, asset?.symbol]);
   
   // Mock chart data - in production, fetch from API
   const chartData = useMemo<ChartData[]>(() => {
@@ -85,11 +85,13 @@ export default function AssetDetailScreen() {
     
     try {
       await addTransaction({
-        assetId: asset.id,
         symbol: asset.symbol,
-        type: tradeType,
+        side: tradeType,
         quantity: parseFloat(quantity),
         price: asset.currentPrice,
+        fee: 0,
+        note: '',
+        attachments: [],
         date: new Date().toISOString(),
       });
       

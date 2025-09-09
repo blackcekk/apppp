@@ -63,7 +63,7 @@ export const [PortfolioProvider, usePortfolio] = createContextHook(() => {
     console.log('Current transactions:', transactions);
     
     // Check if selling and validate quantity
-    if (transaction.type === "sell") {
+    if (transaction.side === "sell") {
       const existingAsset = portfolio.find(a => a.symbol === transaction.symbol);
       if (!existingAsset) {
         throw new Error(`Bu varlığa sahip değilsiniz: ${transaction.symbol}`);
@@ -90,11 +90,11 @@ export const [PortfolioProvider, usePortfolio] = createContextHook(() => {
     if (existingAsset) {
       updatedPortfolio = portfolio.map(asset => {
         if (asset.symbol === transaction.symbol) {
-          const newQuantity = transaction.type === "buy" 
+          const newQuantity = transaction.side === "buy" 
             ? asset.quantity + transaction.quantity
             : asset.quantity - transaction.quantity;
           
-          const newAvgPrice = transaction.type === "buy"
+          const newAvgPrice = transaction.side === "buy"
             ? (asset.avgPrice * asset.quantity + transaction.price * transaction.quantity) / newQuantity
             : asset.avgPrice;
           
@@ -113,7 +113,7 @@ export const [PortfolioProvider, usePortfolio] = createContextHook(() => {
         }
         return asset;
       }).filter(asset => asset.quantity > 0); // Remove assets with 0 quantity
-    } else if (transaction.type === "buy") {
+    } else if (transaction.side === "buy") {
       const newAsset: Asset = {
         id: Date.now().toString(),
         symbol: transaction.symbol,
