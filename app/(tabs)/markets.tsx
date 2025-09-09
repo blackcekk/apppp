@@ -10,7 +10,6 @@ import {
   RefreshControl,
 } from "react-native";
 
-
 import { useTheme } from "@/providers/ThemeProvider";
 import { useLanguage } from "@/providers/LanguageProvider";
 import { Search } from "lucide-react-native";
