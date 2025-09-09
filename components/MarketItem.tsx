@@ -4,6 +4,7 @@ import { useTheme } from "@/providers/ThemeProvider";
 import { useCurrency } from "@/providers/CurrencyProvider";
 import { TrendingUp, TrendingDown, Star } from "lucide-react-native";
 import { formatCurrency, formatPercentage } from "@/utils/formatters";
+import { router } from "expo-router";
 
 interface MarketItemProps {
   item: {
@@ -22,8 +23,19 @@ export default function MarketItem({ item }: MarketItemProps) {
   const { currentCurrency } = useCurrency();
   const isPositive = item.change >= 0;
 
+  const handlePress = () => {
+    router.push({
+      pathname: '/add',
+      params: {
+        preselectedSymbol: item.symbol,
+        preselectedName: item.name,
+        preselectedPrice: item.price.toString()
+      }
+    });
+  };
+
   return (
-    <TouchableOpacity style={[styles.container, { backgroundColor: colors.card }]}>
+    <TouchableOpacity style={[styles.container, { backgroundColor: colors.card }]} onPress={handlePress}>
       <View style={styles.left}>
         <View style={[styles.icon, { backgroundColor: colors.primary + "20" }]}>
           <Text style={[styles.iconText, { color: colors.primary }]}>

@@ -16,7 +16,7 @@ import { useTheme } from "@/providers/ThemeProvider";
 import { useLanguage } from "@/providers/LanguageProvider";
 import { usePortfolio } from "@/providers/PortfolioProvider";
 import { Calendar, DollarSign, Hash } from "lucide-react-native";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import SymbolSearch from "@/components/SymbolSearch";
 
 export default function AddTransactionScreen() {
@@ -24,12 +24,13 @@ export default function AddTransactionScreen() {
   const { t } = useLanguage();
   const { addTransaction, portfolio } = usePortfolio();
   const insets = useSafeAreaInsets();
+  const params = useLocalSearchParams();
   
   const [transactionType, setTransactionType] = useState<"buy" | "sell">("buy");
-  const [symbol, setSymbol] = useState("");
-  const [assetName, setAssetName] = useState("");
+  const [symbol, setSymbol] = useState(params.preselectedSymbol as string || "");
+  const [assetName, setAssetName] = useState(params.preselectedName as string || "");
   const [quantity, setQuantity] = useState("");
-  const [price, setPrice] = useState("");
+  const [price, setPrice] = useState(params.preselectedPrice as string || "");
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
   const [notes, setNotes] = useState("");
 
