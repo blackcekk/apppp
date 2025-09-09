@@ -110,7 +110,7 @@ const LineChart: React.FC<LineChartProps> = ({
               fill={colors.textSecondary}
               textAnchor="middle"
             >
-              {label}
+              {String(label)}
             </SvgText>
           );
         })}
@@ -126,7 +126,7 @@ const LineChart: React.FC<LineChartProps> = ({
               fill={colors.textSecondary}
               textAnchor="end"
             >
-              {label}
+              {String(label)}
             </SvgText>
           );
         })}
