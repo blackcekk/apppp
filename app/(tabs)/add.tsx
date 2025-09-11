@@ -111,12 +111,14 @@ export default function AddTransactionScreen() {
 
     try {
       addTransaction({
-        type: transactionType,
+        side: transactionType,
         symbol: symbol.toUpperCase(),
         quantity: quantityNum,
         price: priceNum,
+        fee: 0,
+        note: notes,
+        attachments: [],
         date,
-        notes,
       });
 
       // Clear form
